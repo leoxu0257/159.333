@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Bubbles</string>
+    <string name="surfaceview">Surface View</string>
+    <string name="triangle">Triangle</string>
+    <string name="square">Square</string>
+    <string name="hexagon">Hexagon</string>
+    <string name="circle">Circle</string>
+</resources>
