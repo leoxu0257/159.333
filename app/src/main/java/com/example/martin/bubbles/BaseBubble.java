@@ -32,16 +32,21 @@ public abstract class BaseBubble {
     /**
      * Determine the object is dragged or not
      */
-   protected boolean isDragDrop;
+  protected boolean isDragDrop;
   
-   protected float polygonR;
-   protected float mDx = 16;
+  // If it is a polygon, it is the distance from the center point of the bubble to each vertex. 
+  // If it is a circle, it is the radius.
+  protected float polygonR;
   
-   protected float mDy = 16;
+  // The x-axis distance moved during each frame refresh， thinking it is speed here
+  protected float mDx = 16;
   
-    /**
-     * View's width and height
-     */
+  // y-axis speed
+  protected float mDy = 16;
+  
+  /**
+   * View's width and height
+   */
   protected int mWidth;
   
   protected int mHeight;
@@ -59,21 +64,23 @@ public abstract class BaseBubble {
         this.paint.setStrokeWidth(4);
         this.paint.setTextSize(64);
         this.paint.setAntiAlias(true);
-    }
+   }
+    
    /**
      * change Hexagon and circle's colors
      */
   public void changeColor() {
         this.paint.setColor(Color.argb(255, (int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)));
   }
-   /**
-     * create a abstract class to make the subclass implementation
-     */
+    
+  /**
+    * create a abstract class to make the subclass implementation
+    */
   public abstract void onDraw(Canvas canvas);
   
     
     //  @param x
-     // @param y
+    // @param y
      
   public void move(float x, float y) {
         centerX = x;
@@ -113,8 +120,13 @@ public abstract class BaseBubble {
         }
         return false;
     }
+    
+    /**
+     * Check if collision happens
+     */
+    public abstract boolean isCollision(BaseBubble buble);
+    
     //@param dt
-  
     public void move(float dt) {
         if (!isDragDrop) {
             // move the center location
@@ -123,14 +135,15 @@ public abstract class BaseBubble {
             move(centerX, centerY);
         }
     }
+    
     // create a abstract class to judge whether the horizontal and vertical axis inside the bubble or not
-     public abstract boolean isInside(float x, float y);
+    public abstract boolean isInside(float x, float y);
     
-    
-        public float getSpeed() {
+    public float getSpeed() {
         float speed = (float) Math.sqrt(mDx * mDx + mDy * mDy);
         return speed;
     }
+    
     //calculate the distance between two center positions
     public float getCenterDistance(BaseBubble buble) {
         return (float) Math.sqrt((centerX - buble.centerX) * (centerX - buble.centerX) + (centerY - buble.centerY) * (centerY - buble.centerY));
@@ -183,6 +196,7 @@ public abstract class BaseBubble {
         }
         return true;
     }
+    
     /**judge the 2 line is interset or not
     a: coordinates of starting point
     b: coordinates of endpoint
@@ -272,5 +286,81 @@ public abstract class BaseBubble {
         return 0;
     }
     
+    /**
+     * return new coordinates after the rotation around the centre point
+     */
     
+    public Point rotationNewPoint(Point p, float rotationAngle) {
+        // calc arc
+        float radian = (float) ((rotationAngle * Math.PI) / 180);
+        // sin/cos value
+        float cosv = (float) Math.cos(radian);
+        float sinv = (float) Math.sin(radian);
+        float newX = p.x * cosv - p.y * sinv;
+        float newY = p.y * cosv + p.x * sinv;
+        return new Point(newX, newY);
+    }
+
+    /**
+     * Get absolute coordinates The canvas is panned to the specified coordinates. 
+     * The starting point of the drawing is relative to the canvas. 
+     * Need to calculate the absolute coordinates when calculating.
+     */
+    
+    public Point getAbsolutePoint(Point point) {
+        return new Point(point.x + centerX, point.y + centerY);
+    }
+
+    /**
+     * Check if the point is on the edge.
+     */
+    public boolean isOnEdge(float x, float y) {
+        /**
+         * Calculate whether the line segment connecting this point 
+         * with the center point has intersections with the edges of the polygon.
+         */
+        Point a = new Point(x, y);
+        Point c = getAbsolutePoint(points.get(0));
+        for (int i = 1; i < points.size(); i++) {
+            Point d = getAbsolutePoint(points.get(i));
+            if (getIntersection(c, d, a, a) == 1) {// if just one intersection, on edge.
+                return true;
+            }
+            c = d;
+        }
+        Point d = getAbsolutePoint(points.get(0));// Line segment consisting of the last point and the first point
+        if (getIntersection(c, d, a, a) == 1) {
+            return true;// if just one intersection, on edge
+        }
+        return false;
+    }
+
+    /**
+     * Collision detection
+     */
+    public boolean isCollision(float x, float y) {
+        boolean result = false;
+        if (points != null) {
+            Point p = new Point(x, y); // points are all vertex
+            for (Point point : points) {// Find if there is a vertex inside or on the edge of another polygon
+                result = isInside(x, y);
+                if (result) {// find a vertex inside, end the loop
+                    break;
+                } else {
+                    result = isOnEdge(x, y);
+                    if (result) {// find a vertex on edge, end the loop 
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Check if it is clockwise rotation.
+     */
+    public boolean isClockwise() {
+        return Math.abs(mDx) >= Math.abs(mDy);
+    }
 }
