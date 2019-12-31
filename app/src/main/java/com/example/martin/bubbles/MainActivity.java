@@ -16,7 +16,7 @@ import static java.lang.Thread.sleep;
 
 public class MainActivity extends Activity {
 
-    
+
     private static final String TAG = "MainActivity";
     private boolean mPaused = false;
     private Thread mThread;
