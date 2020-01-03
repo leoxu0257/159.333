@@ -195,7 +195,83 @@ public class BubbleManager {
             mBubbleList.remove(bubble);// remove bubble from the list (delete bubbles) 
         }
     }
-    
+    /**
+     * Check if that bubble can be moved to finger's position
+     */
+    private boolean moveEnable(BaseBubble bubble1) {
+        for (BaseBubble bubble2 : mBubbleList) {
+            if (bubble1 != bubble2 && bubble1.getIntersectDistance(bubble2) > 0) {//The distance overlapping > 0
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * handle for collide problem
+     */
+    private void handleCollide(BaseBubble bubble1) {
+        for (BaseBubble bubble2 : mBubbleList) {
+            if (bubble1 != bubble2) {
+                if (bubble2.isMove) {
+                    continue;
+                }
+                if (bubble1.isCollision(bubble2)) {//Two bubble collision
+                    if (mBubbleType == BubbleType.TRIANGLE && (((TriangleBubble) bubble1).isEdgeContact(bubble2))) {//Triangle edge touched
+                        if (bubble1.polygonR > bubble2.polygonR) {//Edge touched bigger bubble eat smaller bubble
+                            bubble1.centerX = (bubble1.centerX + bubble2.centerX) / 2;//New bubble show in the middle
+                            bubble1.centerY = (bubble1.centerY + bubble2.centerY) / 2;
+                            bubble1.polygonR += bubble2.polygonR;//New bubble bigger
+                            bubble2.isMove = true;
+                            ((TriangleBubble) bubble1).initPoints(0);
+                        } else {
+                            bubble2.centerX = (bubble1.centerX + bubble2.centerX) / 2;
+                            bubble2.centerY = (bubble1.centerY + bubble2.centerY) / 2;
+                            bubble2.polygonR += bubble1.polygonR;
+                            bubble1.isMove = true;
+                            ((TriangleBubble) bubble2).initPoints(0);
+                        }
+                        continue;
+                    }
+                    if (bubble1.isDragDrop) {//If bubble is draging by finger then collision
+                        bubble2.mDx = -bubble2.mDx;
+                        bubble2.mDy = -bubble2.mDy;
+                        while (bubble1.getIntersectDistance(bubble2) > 0) {
+                            bubble2.move(1);
+                        }
+                    } else if (bubble2.isDragDrop) {
+                        bubble1.mDx = -bubble1.mDx;
+                        bubble1.mDy = -bubble1.mDy;
+                        while (bubble1.getIntersectDistance(bubble2) > 0) {
+                            bubble1.move(1);
+                        }
+                    } else {
+                        /**
+                         * M = R^2 calculate speed
+                         */
+                        float x[] = getSpeed(bubble1.polygonR * bubble1.polygonR, bubble2.polygonR * bubble2.polygonR, bubble1.mDx, bubble2.mDx);
+                        float y[] = getSpeed(bubble1.polygonR * bubble1.polygonR, bubble2.polygonR * bubble2.polygonR, bubble1.mDy, bubble2.mDy);
+                        bubble1.mDx = x[0];
+                        bubble2.mDx = x[1];
+                        bubble1.mDy = y[0];
+                        bubble2.mDy = y[1];
+                        while (bubble1.getIntersectDistance(bubble2) > 0) {//If bubble move will touch boundary, move bubble 1
+                            if (bubble2.isCross(bubble2.centerX + bubble2.mDx, bubble2.centerY + bubble2.mDy)) {
+                                bubble1.move(bubble1.centerX + bubble1.mDx, bubble1.centerY + bubble1.mDy);
+                            } else {
+                                bubble2.move(bubble2.centerX + bubble2.mDx, bubble2.centerY + bubble2.mDy);
+                            }
+                        }
+                    }
+                    if (mBubbleType == BubbleType.SQUARE) {//Square spin
+                        ((SquareBubble) bubble1).angle = bubble1.isClockwise() ? 2 : -2;
+                        ((SquareBubble) bubble2).angle = bubble2.isClockwise() ? 2 : -2;
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Calculate velocity after collision without energy loss based on conservation of energy and impulse
      */
