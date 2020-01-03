@@ -102,6 +102,7 @@ public class TriangleBubble extends BaseBubble {
     /**
      * Check edge contact
      */
+    
     public boolean isEdgeContact(BaseBubble bubble) {
         //Angle have to be different
         if (((TriangleBubble) bubble).angle != angle) {
