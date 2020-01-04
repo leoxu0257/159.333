@@ -183,7 +183,7 @@ public class BubbleManager {
      * Collision detection
      */
     private void collide() {
-        List<BaseBubble> temp = new ArrayList<>();// list of bubbles 
+        List<BaseBubble> temp = new ArrayList<>();// list of bubbles
         for (BaseBubble bubble : mBubbleList) {
             if (bubble.isMove) {
                 temp.add(bubble);
