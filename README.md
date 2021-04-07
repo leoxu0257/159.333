@@ -1,2 +1,2 @@
-AndroidBubbleGame
+Android Bubble Game
 
